@@ -272,7 +272,7 @@ function M:CreatePanel(parent)
     _detailPanel:Hide()
 
     -- Detail header
-    _detailName = UI:CreateTitle(_detailPanel, "—")
+    _detailName = UI:CreateTitle(_detailPanel, "-")
     _detailName:SetPoint("TOPLEFT", _detailPanel, "TOPLEFT", PAD, -PAD)
     _detailName:SetPoint("TOPRIGHT", _detailPanel, "TOPRIGHT", -PAD, -PAD)
 
@@ -305,7 +305,7 @@ function M:CreatePanel(parent)
     _detailNotes:SetJustifyH("LEFT")
     _detailNotes:SetWordWrap(true)
 
-    _detailNoteInput = UI:CreateInput(_detailPanel, "Add internal note…", function(text)
+    _detailNoteInput = UI:CreateInput(_detailPanel, "Add internal note...", function(text)
         if _selected and text ~= "" then
             _selected.notes = (_selected.notes ~= "" and _selected.notes .. "\n" or "") .. text
             _detailNotes:SetText(_selected.notes)

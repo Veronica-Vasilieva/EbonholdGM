@@ -116,13 +116,13 @@ function UI:Build()
         else
             win:SetHeight(T.TITLEBAR_H)
             win._minimized = true
-            minLbl:SetText("□")
+            minLbl:SetText("[+]")
         end
     end)
     Utils.AddTooltip(minBtn, "Minimize / Restore")
 
     -- Global search bar
-    local searchCont = UI:CreateInput(titleBar, "Search commands, players, locations…", nil, function(text)
+    local searchCont = UI:CreateInput(titleBar, "Search commands, players, locations...", nil, function(text)
         UI:OnGlobalSearch(text)
     end)
     searchCont:SetPoint("LEFT",  titleBar, "LEFT",  T.SIDEBAR_W + 200, 0)
@@ -234,7 +234,7 @@ function UI:Build()
     local startMod = cfg:Get("activeModule") or "Commands"
     UI:SwitchModule(startMod)
 
-    UI:SetStatus("Ready  —  " .. Utils.PlayerName())
+    UI:SetStatus("Ready - " .. Utils.PlayerName())
 end
 
 -- ---------------------------------------------------------------------------

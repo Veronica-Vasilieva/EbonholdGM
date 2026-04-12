@@ -1,3 +1,14 @@
+## [1.0.8] - 2026-04-12
+
+### Fixed
+- **Full ASCII sweep**: Removed all remaining non-ASCII characters from every `.lua` file. WoW 3.3.5a renders multi-byte characters as `?`. Replacements across 8 files:
+  - `…` -> `...` (Utils, MainFrame, Commands, Players, Chat, Teleport, Tickets, Macros)
+  - `—` (em dash) -> `-` (MainFrame, Init, Players, Tickets)
+  - `□` -> `[+]` (MainFrame minimize-restore button)
+  - `💾` -> removed (Macros Save button)
+  - `📍` -> removed (Teleport Save Here button)
+  - `✕` -> `X` (Teleport delete row button)
+
 ## [1.0.7] - 2026-04-12
 
 ### Fixed

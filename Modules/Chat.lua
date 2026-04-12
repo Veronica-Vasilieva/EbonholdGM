@@ -369,7 +369,7 @@ function M:CreatePanel(parent)
     makeFilterBtn("Channel", "CHAT_MSG_CHANNEL")
 
     -- Search input
-    local searchInput = UI:CreateInput(filterBar, "Search sender or text…", nil, function(text)
+    local searchInput = UI:CreateInput(filterBar, "Search sender or text...", nil, function(text)
         _filterText = text or ""
         M:RenderLog()
     end)

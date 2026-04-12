@@ -3,7 +3,7 @@
 
 EbonholdGM = {
     ADDON_NAME    = "EbonholdGM",
-    ADDON_VERSION = "1.0.7",
+    ADDON_VERSION = "1.0.8",
     _modules      = {},   -- name -> module table (ordered by registration)
     _moduleOrder  = {},   -- insertion-ordered names
     UI            = {},   -- UI subsystem (populated by UI files)
@@ -107,6 +107,6 @@ bootFrame:SetScript("OnEvent", function(self, event, arg1)
                 end
             end
         end
-        GM:Print("v" .. GM.ADDON_VERSION .. " loaded  —  |cFFFFD700/egm|r to open")
+        GM:Print("v" .. GM.ADDON_VERSION .. " loaded - |cFFFFD700/egm|r to open")
     end
 end)

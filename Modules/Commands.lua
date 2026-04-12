@@ -66,7 +66,7 @@ local CMD_DB = {
     { cmd=".summon",          desc="Summon a player to your location",           params="{name}",          category="Teleport" },
     { cmd=".appear",          desc="Teleport yourself to a player",              params="{name}",          category="Teleport" },
     { cmd=".send mail",       desc="Send mail to a player",                      params="{name} {subject} {text}", category="Mail" },
-    { cmd=".send items",      desc="Send items by mail to a player",             params="{name} {subject} {text} {itemId:count} …", category="Mail" },
+    { cmd=".send items",      desc="Send items by mail to a player",             params="{name} {subject} {text} {itemId:count} ...", category="Mail" },
     { cmd=".send money",      desc="Send money by mail to a player",             params="{name} {subject} {text} {copper}", category="Mail" },
     { cmd=".send message",    desc="Send system message to a player",            params="{name} {text}",   category="Mail" },
 
@@ -375,7 +375,7 @@ function M:CreatePanel(parent)
     topBar:SetPoint("TOPLEFT",  _panel, "TOPLEFT",  PAD, -PAD)
     topBar:SetPoint("TOPRIGHT", _panel, "TOPRIGHT", -PAD, -PAD)
 
-    _searchInput = UI:CreateInput(topBar, "Filter commands…", nil, function(text)
+    _searchInput = UI:CreateInput(topBar, "Filter commands...", nil, function(text)
         _searchText = text
         FilterCommands(text, _activeCategory)
         RenderRows()

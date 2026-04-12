@@ -40,12 +40,12 @@ local function DisplayPlayerInfo(name)
         _levelLbl:SetText("Level: |cFFFFFFFF" .. (level or "?") .. "|r")
         _classLbl:SetText("Class: |cFFFFFFFF" .. (class or "?") .. "|r")
         _raceLbl:SetText("Race:  |cFFFFFFFF" .. (race or "?") .. "|r")
-        _zoneLbl:SetText("Zone:  |cFFFFFFFF—|r")
+        _zoneLbl:SetText("Zone:  |cFFFFFFFF-|r")
         _onlineLbl:SetText("Status: |cFF40E048Online|r")
     else
-        _levelLbl:SetText("Level: |cFF888888—|r")
-        _classLbl:SetText("Class: |cFF888888—|r")
-        _raceLbl:SetText("Race:  |cFF888888—|r")
+        _levelLbl:SetText("Level: |cFF888888-|r")
+        _classLbl:SetText("Class: |cFF888888-|r")
+        _raceLbl:SetText("Race:  |cFF888888-|r")
         _zoneLbl:SetText("Zone:  |cFF888888—|r")
         _onlineLbl:SetText("Status: |cFF888888unknown|r")
     end
@@ -110,12 +110,12 @@ end
 
 local function BanPlayer(name)
     Utils.InputPopup(
-        "Ban |cFFFFD700" .. name .. "|r — duration in days (0 = permanent):",
+        "Ban |cFFFFD700" .. name .. "|r - duration in days (0 = permanent):",
         "0",
         function(days)
             Utils.InputPopup("Ban reason:", "Exploiting", function(reason)
                 Utils.ExecCommand(".ban character " .. name .. " " .. days .. " " .. reason,
-                    true, "Ban |cFFFFD700" .. name .. "|r — are you sure?")
+                    true, "Ban |cFFFFD700" .. name .. "|r - are you sure?")
             end)
         end
     )
@@ -183,7 +183,7 @@ function M:CreatePanel(parent)
     header:SetPoint("TOPLEFT",  _panel, "TOPLEFT",  PAD, -PAD)
     header:SetPoint("TOPRIGHT", _panel, "TOPRIGHT", -PAD, -PAD)
 
-    _nameInput = UI:CreateInput(_panel, "Enter player name…", function(name)
+    _nameInput = UI:CreateInput(_panel, "Enter player name...", function(name)
         DisplayPlayerInfo(Utils.Trim(name))
     end, nil)
     _nameInput:SetPoint("TOPLEFT",  header, "BOTTOMLEFT",  0,   -6)
@@ -223,27 +223,27 @@ function M:CreatePanel(parent)
     _infoPanel:SetPoint("RIGHT", _panel, "RIGHT", -PAD, 0)
     _infoPanel:Hide()
 
-    _nameLbl   = UI:CreateLabel(_infoPanel, "—", 14, "TEXT_ACCENT")
+    _nameLbl   = UI:CreateLabel(_infoPanel, "-", 14, "TEXT_ACCENT")
     _nameLbl:SetPoint("TOPLEFT", _infoPanel, "TOPLEFT", PAD, -PAD)
 
     local col1x, col2x = PAD, 180
     local rowY = -PAD - 20
 
-    _levelLbl = UI:CreateLabel(_infoPanel, "Level: —", 11)
+    _levelLbl = UI:CreateLabel(_infoPanel, "Level: -", 11)
     _levelLbl:SetPoint("TOPLEFT", _infoPanel, "TOPLEFT", col1x, rowY)
 
-    _classLbl = UI:CreateLabel(_infoPanel, "Class: —", 11)
+    _classLbl = UI:CreateLabel(_infoPanel, "Class: -", 11)
     _classLbl:SetPoint("TOPLEFT", _infoPanel, "TOPLEFT", col2x, rowY)
 
     rowY = rowY - 16
-    _raceLbl = UI:CreateLabel(_infoPanel, "Race:  —", 11)
+    _raceLbl = UI:CreateLabel(_infoPanel, "Race:  -", 11)
     _raceLbl:SetPoint("TOPLEFT", _infoPanel, "TOPLEFT", col1x, rowY)
 
-    _zoneLbl = UI:CreateLabel(_infoPanel, "Zone:  —", 11)
+    _zoneLbl = UI:CreateLabel(_infoPanel, "Zone:  -", 11)
     _zoneLbl:SetPoint("TOPLEFT", _infoPanel, "TOPLEFT", col2x, rowY)
 
     rowY = rowY - 16
-    _onlineLbl = UI:CreateLabel(_infoPanel, "Status: —", 11)
+    _onlineLbl = UI:CreateLabel(_infoPanel, "Status: -", 11)
     _onlineLbl:SetPoint("TOPLEFT", _infoPanel, "TOPLEFT", col1x, rowY)
 
     -- -----------------------------------------------------------------------

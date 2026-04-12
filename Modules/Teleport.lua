@@ -185,7 +185,7 @@ function M:RenderList()
             row._sendBtn = sendBtn
 
             -- Delete button (custom only)
-            local delBtn = UI:CreateButton(row, "✕", true, nil)
+            local delBtn = UI:CreateButton(row, "X", true, nil)
             delBtn:SetSize(22, 20)
             delBtn:SetPoint("RIGHT", sendBtn, "LEFT", -4, 0)
             row._delBtn = delBtn
@@ -299,7 +299,7 @@ function M:CreatePanel(parent)
     local titleLbl = UI:CreateTitle(toolbar, "Teleport & World")
     titleLbl:SetPoint("LEFT", toolbar, "LEFT", 0, 0)
 
-    local saveBtn = UI:CreateButton(toolbar, "📍 Save Here", false, SaveCurrentLocation)
+    local saveBtn = UI:CreateButton(toolbar, "Save Here", false, SaveCurrentLocation)
     saveBtn:SetSize(90, 22)
     saveBtn:SetPoint("RIGHT", toolbar, "RIGHT", 0, 0)
     Utils.AddTooltip(saveBtn, "Save your current location")
@@ -348,7 +348,7 @@ function M:CreatePanel(parent)
     -- -----------------------------------------------------------------------
     -- Search bar
     -- -----------------------------------------------------------------------
-    _searchInput = UI:CreateInput(_panel, "Search locations…", nil, function(text)
+    _searchInput = UI:CreateInput(_panel, "Search locations...", nil, function(text)
         _filterText = text or ""
         M:RenderList()
     end)

@@ -26,10 +26,10 @@ function Utils.Contains(haystack, needle)
     return haystack:lower():find(needle:lower(), 1, true) ~= nil
 end
 
---- Truncate string to maxLen, appending "…" if cut.
+--- Truncate string to maxLen, appending "..." if cut.
 function Utils.Truncate(s, maxLen)
     if #s <= maxLen then return s end
-    return s:sub(1, maxLen - 1) .. "…"
+    return s:sub(1, maxLen - 1) .. "..."
 end
 
 --- Wrap a string in a WoW color escape.
