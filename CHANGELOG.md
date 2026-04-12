@@ -1,3 +1,8 @@
+## [1.0.9] - 2026-04-12
+
+### Fixed
+- **Scroll frames overflowing panel bottom**: All three scroll-frame `BOTTOMRIGHT` anchors had a negative Y offset, which moves the bottom edge *below* the parent panel in WoW's coordinate system (Y increases upward). Fixed in Chat, Commands, and Teleport modules by flipping the sign to positive, keeping all content inside the main window.
+
 ## [1.0.8] - 2026-04-12
 
 ### Fixed

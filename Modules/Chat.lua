@@ -400,7 +400,7 @@ function M:CreatePanel(parent)
     -- -----------------------------------------------------------------------
     _scrollFrame, _scrollChild = UI:CreateScrollFrame(_panel, "EGMChatScroll")
     _scrollFrame:SetPoint("TOPLEFT",     filterBar, "BOTTOMLEFT",  0,    -4)
-    _scrollFrame:SetPoint("BOTTOMRIGHT", _panel,    "BOTTOMRIGHT", -20, -(PAD + 24))
+    _scrollFrame:SetPoint("BOTTOMRIGHT", _panel,    "BOTTOMRIGHT", -20, PAD + 24)
 
     return _panel
 end

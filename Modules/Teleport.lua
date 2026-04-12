@@ -361,7 +361,7 @@ function M:CreatePanel(parent)
     -- -----------------------------------------------------------------------
     local sf, sc = UI:CreateScrollFrame(_panel, "EGMTeleScroll")
     sf:SetPoint("TOPLEFT",     _searchInput, "BOTTOMLEFT",  0,    -4)
-    sf:SetPoint("BOTTOMRIGHT", _panel,       "BOTTOMRIGHT", -20, -PAD)
+    sf:SetPoint("BOTTOMRIGHT", _panel,       "BOTTOMRIGHT", -20, PAD)
     _scrollChild = sc
 
     M:RenderList()

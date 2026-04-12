@@ -471,7 +471,7 @@ function M:CreatePanel(parent)
     -- -----------------------------------------------------------------------
     local scrollFrame, scrollChild = UI:CreateScrollFrame(_panel, "EGMCommandsScroll")
     scrollFrame:SetPoint("TOPLEFT",     catBar,  "BOTTOMLEFT",  0,    -4)
-    scrollFrame:SetPoint("BOTTOMRIGHT", _panel,  "BOTTOMRIGHT", -20, -PAD)
+    scrollFrame:SetPoint("BOTTOMRIGHT", _panel,  "BOTTOMRIGHT", -20, PAD)
     _scrollChild = scrollChild
 
     -- No results label
