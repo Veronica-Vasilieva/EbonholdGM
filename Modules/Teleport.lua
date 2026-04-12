@@ -278,6 +278,10 @@ function M:OnShow()
     M:RenderList()
 end
 
+function M:OnResize()
+    M:RenderList()
+end
+
 function M:OnSearch(text)
     _filterText = text or ""
     if _searchInput then _searchInput.editBox:SetText(_filterText) end

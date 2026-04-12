@@ -218,6 +218,10 @@ function M:OnShow()
     M:RenderList()
 end
 
+function M:OnResize()
+    M:RenderList()
+end
+
 function M:CreatePanel(parent)
     local c = T:Get()
     _panel = UI:CreatePanel(parent, "BG", "BORDER")

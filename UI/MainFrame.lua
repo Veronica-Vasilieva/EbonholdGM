@@ -169,6 +169,15 @@ function UI:Build()
     content:SetPoint("BOTTOMRIGHT", win, "BOTTOMRIGHT", 0,            T.STATUSBAR_H)
     UI._content = content
 
+    -- Re-render the active module's list whenever the content area changes size
+    -- so that row buttons stay pinned to the correct right edge.
+    content:SetScript("OnSizeChanged", function(self, w, h)
+        local mod = UI.activeModule
+        if mod and mod.OnResize then
+            mod:OnResize(w, h)
+        end
+    end)
+
     -- -----------------------------------------------------------------------
     -- Status bar
     -- -----------------------------------------------------------------------

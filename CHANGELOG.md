@@ -1,3 +1,8 @@
+## [1.1.2] - 2026-04-12
+
+### Fixed
+- **Row buttons don't reposition on window resize**: When the window was resized, row buttons (Run, favourite) stayed at their original positions. Two root causes: (1) `child:SetWidth(w)` passed the full scroll frame width including the 20px scrollbar, so right-edge buttons were hidden behind it — fixed to `w - 20`; (2) WoW 3.3.5a's layout engine does not reliably re-evaluate grandchild anchor positions when a scroll child's width changes via `SetWidth`. Fixed by adding `content:SetScript("OnSizeChanged")` in MainFrame that calls the active module's new `OnResize()` method, which re-renders all rows at the correct width. All five list modules (Commands, Teleport, Tickets, Chat, Macros) now implement `OnResize`.
+
 ## [1.1.1] - 2026-04-12
 
 ### Added

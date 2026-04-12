@@ -216,6 +216,10 @@ function M:OnShow()
     self:Refresh()
 end
 
+function M:OnResize()
+    M:RenderList()
+end
+
 function M:Refresh()
     _tickets   = {}
     _listening = true

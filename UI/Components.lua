@@ -248,9 +248,11 @@ function UI:CreateScrollFrame(parent, name)
     child:SetHeight(1)  -- grows dynamically; width driven by OnSizeChanged below
     sf:SetScrollChild(child)
 
-    -- Keep child width in sync with the scroll frame (GetWidth() is 0 at creation time)
+    -- Keep child width in sync with the scroll frame.
+    -- Subtract 20px for the UIPanelScrollFrameTemplate scrollbar so row
+    -- buttons at the right edge are never hidden behind it.
     sf:SetScript("OnSizeChanged", function(self, w, h)
-        if w and w > 0 then child:SetWidth(w) end
+        if w and w > 0 then child:SetWidth(math.max(w - 20, 1)) end
     end)
 
     sf._child = child

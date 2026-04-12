@@ -362,6 +362,10 @@ function M:OnShow()
     RenderRows()
 end
 
+function M:OnResize()
+    RenderRows()
+end
+
 function M:CreatePanel(parent)
     local c = T:Get()
 
