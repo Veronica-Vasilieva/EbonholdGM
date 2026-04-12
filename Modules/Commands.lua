@@ -437,23 +437,40 @@ function M:CreatePanel(parent)
     end
     table.sort(categories)
 
-    -- Wrap the category buttons in a horizontal ScrollFrame so they clip
-    -- cleanly at the window edge when the window is narrower than the total
-    -- button width. Mouse-wheel scrolls left/right.
+    -- Left / right scroll arrow buttons flanking the category strip.
+    local ARROW_W = 20
+    local SCROLL_STEP = 80
+
+    local catLeftBtn = UI:CreateButton(_panel, "<", false, nil)
+    catLeftBtn:SetSize(ARROW_W, 22)
+    catLeftBtn:SetPoint("TOPLEFT", topBar, "BOTTOMLEFT", 0, -4)
+
+    local catRightBtn = UI:CreateButton(_panel, ">", false, nil)
+    catRightBtn:SetSize(ARROW_W, 22)
+    catRightBtn:SetPoint("TOPRIGHT", topBar, "BOTTOMRIGHT", 0, -4)
+
+    -- Horizontal ScrollFrame sits between the two arrow buttons.
+    -- Mouse-wheel and arrow-button clicks both scroll left/right.
     local catSF = CreateFrame("ScrollFrame", "EGMCatSF", _panel)
     catSF:SetHeight(24)
-    catSF:SetPoint("TOPLEFT",  topBar, "BOTTOMLEFT",  0, -4)
-    catSF:SetPoint("TOPRIGHT", topBar, "BOTTOMRIGHT", 0, -4)
+    catSF:SetPoint("TOPLEFT",  catLeftBtn,  "TOPRIGHT",  2, 0)
+    catSF:SetPoint("TOPRIGHT", catRightBtn, "TOPLEFT",  -2, 0)
 
     local catBar = CreateFrame("Frame", nil, catSF)
     catBar:SetHeight(24)
     catSF:SetScrollChild(catBar)
 
+    local function scrollCat(delta)
+        local cur = catSF:GetHorizontalScroll()
+        local max = catSF:GetHorizontalScrollRange()
+        catSF:SetHorizontalScroll(math.min(math.max(cur + delta, 0), max))
+    end
+
     catSF:SetScript("OnMouseWheel", function(self, delta)
-        local cur = self:GetHorizontalScroll()
-        local max = self:GetHorizontalScrollRange()
-        self:SetHorizontalScroll(math.min(math.max(cur - delta * 40, 0), max))
+        scrollCat(-delta * SCROLL_STEP)
     end)
+    catLeftBtn:SetScript("OnClick",  function() scrollCat(-SCROLL_STEP) end)
+    catRightBtn:SetScript("OnClick", function() scrollCat( SCROLL_STEP) end)
 
     local catBtnX = 0
     local function makeCatBtn(label, catName)

@@ -1,3 +1,8 @@
+## [1.1.4] - 2026-04-12
+
+### Added
+- **Category tab scroll arrows**: `<` and `>` buttons now flank the category filter strip. Clicking either scrolls the strip left/right by 80px. Mouse wheel still works. The horizontal ScrollFrame sits between the two arrow buttons so the layout is clean at any window width.
+
 ## [1.1.3] - 2026-04-12
 
 ### Fixed
