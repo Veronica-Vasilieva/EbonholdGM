@@ -11,12 +11,20 @@ local Utils = GM.Utils
 -- GM.UI:Build()  — called once from Init.lua after PLAYER_LOGIN
 -- ---------------------------------------------------------------------------
 
+-- Minimum window dimensions — below these the layout breaks.
+local WIN_MIN_W = 520
+local WIN_MIN_H = 400
+-- Default (and maximum sensible) dimensions.
+local WIN_DEF_W = 820
+local WIN_DEF_H = 640
+
 function UI:Build()
     local c   = T:Get()
     local cfg = GM.Config
 
-    local W = cfg:GetNested("window", "width")  or 820
-    local H = cfg:GetNested("window", "height") or 640
+    -- Clamp saved size to minimum so a previously-broken save can't re-break the layout.
+    local W = math.max(cfg:GetNested("window", "width")  or WIN_DEF_W, WIN_MIN_W)
+    local H = math.max(cfg:GetNested("window", "height") or WIN_DEF_H, WIN_MIN_H)
 
     -- -----------------------------------------------------------------------
     -- Root frame
@@ -27,6 +35,7 @@ function UI:Build()
     win:SetToplevel(true)
     win:SetMovable(true)
     win:SetResizable(true)
+    win:SetMinResize(WIN_MIN_W, WIN_MIN_H)
     win:SetClampedToScreen(true)
     win:EnableMouse(true)
     win:SetBackdrop(T.BACKDROP_DIALOG)
@@ -108,12 +117,12 @@ function UI:Build()
     minLbl:SetTextColor(T.RGBA(c.TEXT_ACCENT))
     minLbl:SetText("_")
     minBtn:SetScript("OnClick", function()
-        -- Collapse to just title bar
         if win._minimized then
-            win:SetHeight(H)
+            win:SetHeight(win._restoreH or WIN_DEF_H)
             win._minimized = false
             minLbl:SetText("_")
         else
+            win._restoreH = win:GetHeight()
             win:SetHeight(T.TITLEBAR_H)
             win._minimized = true
             minLbl:SetText("[+]")
@@ -217,10 +226,12 @@ function UI:Build()
     end)
     resizeHandle:SetScript("OnMouseUp", function()
         win:StopMovingOrSizing()
-        cfg:SetNested("window", "width",  win:GetWidth())
-        cfg:SetNested("window", "height", win:GetHeight())
-        -- Reflow content
-        content:SetWidth(win:GetWidth() - T.SIDEBAR_W)
+        local newW = math.max(win:GetWidth(),  WIN_MIN_W)
+        local newH = math.max(win:GetHeight(), WIN_MIN_H)
+        win:SetSize(newW, newH)
+        cfg:SetNested("window", "width",  newW)
+        cfg:SetNested("window", "height", newH)
+        content:SetWidth(newW - T.SIDEBAR_W)
     end)
 
     -- -----------------------------------------------------------------------

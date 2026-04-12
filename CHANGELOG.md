@@ -1,3 +1,13 @@
+## [1.1.1] - 2026-04-12
+
+### Added
+- **Minimum window size enforced**: `win:SetMinResize(520, 400)` prevents the resize handle from collapsing the window below a usable size. The layout breaks below these dimensions.
+
+### Fixed
+- **Saved size below minimum clamped on load**: If a SavedVariables entry stores a broken sub-minimum size (e.g. from dragging all the way to the left before this fix), it is now clamped to `WIN_MIN_W` / `WIN_MIN_H` at load time so the window always opens correctly.
+- **Resize OnMouseUp double-clamps**: After releasing the resize handle the saved width/height are also clamped, preventing a bad value ever reaching SavedVariables.
+- **Minimize restore used stale height**: The minimize button restored to `H` captured at build time. If the user had resized since then, the window snapped to the wrong height. Now saves `win._restoreH = win:GetHeight()` at minimize-time and restores that value.
+
 ## [1.1.0] - 2026-04-12
 
 ### Fixed
