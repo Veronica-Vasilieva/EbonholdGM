@@ -74,8 +74,9 @@ function M:RenderList()
     for i, macro in ipairs(macros) do
         local row = _listRowPool[i]
         if not row then
-            row = CreateFrame("Frame", nil, sc)
+            row = CreateFrame("Button", nil, sc)
             row:SetHeight(ROW_H)
+            row:EnableMouse(true)
             row:SetBackdrop(T.BACKDROP_FLAT)
 
             local nameLbl = row:CreateFontString(nil, "OVERLAY")
@@ -123,7 +124,7 @@ function M:RenderList()
         end)
 
         local capturedI = i
-        row:SetScript("OnMouseDown", function()
+        row:SetScript("OnClick", function()
             _selectedIndex = capturedI
             M:RenderList()
             M:LoadEditorForIndex(capturedI)

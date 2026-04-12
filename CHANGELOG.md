@@ -1,3 +1,8 @@
+## [1.1.0] - 2026-04-12
+
+### Fixed
+- **Macros — rows not selectable**: List rows were created as `Frame` without `EnableMouse(true)`, so `OnMouseDown` never fired, `_selectedIndex` was never set, and the Delete button always had no target. Changed rows to `Button` type, added `EnableMouse(true)`, and switched the handler from `OnMouseDown` to `OnClick` for reliable input in 3.3.5a.
+
 ## [1.0.9] - 2026-04-12
 
 ### Fixed
