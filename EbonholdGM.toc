@@ -1,0 +1,21 @@
+## Interface: 30300
+## Title: |cFF4FC3F7Ebonhold|r|cFFFFD700GM|r
+## Notes: Professional GM & Admin control panel for TrinityCore/AzerothCore
+## Author: Ebonhold
+## Version: 1.0.6
+## SavedVariables: EbonholdGM_DB
+
+Core\Init.lua
+Core\Config.lua
+Core\Events.lua
+Utils\Utils.lua
+UI\Themes.lua
+UI\Components.lua
+UI\MainFrame.lua
+UI\Sidebar.lua
+Modules\Commands.lua
+Modules\Players.lua
+Modules\Tickets.lua
+Modules\Chat.lua
+Modules\Teleport.lua
+Modules\Macros.lua
