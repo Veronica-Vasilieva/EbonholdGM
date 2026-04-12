@@ -437,10 +437,23 @@ function M:CreatePanel(parent)
     end
     table.sort(categories)
 
-    local catBar = CreateFrame("Frame", nil, _panel)
+    -- Wrap the category buttons in a horizontal ScrollFrame so they clip
+    -- cleanly at the window edge when the window is narrower than the total
+    -- button width. Mouse-wheel scrolls left/right.
+    local catSF = CreateFrame("ScrollFrame", "EGMCatSF", _panel)
+    catSF:SetHeight(24)
+    catSF:SetPoint("TOPLEFT",  topBar, "BOTTOMLEFT",  0, -4)
+    catSF:SetPoint("TOPRIGHT", topBar, "BOTTOMRIGHT", 0, -4)
+
+    local catBar = CreateFrame("Frame", nil, catSF)
     catBar:SetHeight(24)
-    catBar:SetPoint("TOPLEFT",  topBar, "BOTTOMLEFT",  0, -4)
-    catBar:SetPoint("TOPRIGHT", topBar, "BOTTOMRIGHT", 0, -4)
+    catSF:SetScrollChild(catBar)
+
+    catSF:SetScript("OnMouseWheel", function(self, delta)
+        local cur = self:GetHorizontalScroll()
+        local max = self:GetHorizontalScrollRange()
+        self:SetHorizontalScroll(math.min(math.max(cur - delta * 40, 0), max))
+    end)
 
     local catBtnX = 0
     local function makeCatBtn(label, catName)
@@ -469,12 +482,14 @@ function M:CreatePanel(parent)
     for _, cat in ipairs(categories) do
         makeCatBtn(cat, cat)
     end
+    -- Set scroll child width to the full button strip so the scroll range is correct
+    catBar:SetWidth(catBtnX)
 
     -- -----------------------------------------------------------------------
     -- Scroll frame
     -- -----------------------------------------------------------------------
     local scrollFrame, scrollChild = UI:CreateScrollFrame(_panel, "EGMCommandsScroll")
-    scrollFrame:SetPoint("TOPLEFT",     catBar,  "BOTTOMLEFT",  0,    -4)
+    scrollFrame:SetPoint("TOPLEFT",     catSF,   "BOTTOMLEFT",  0,    -4)
     scrollFrame:SetPoint("BOTTOMRIGHT", _panel,  "BOTTOMRIGHT", -20, PAD)
     _scrollChild = scrollChild
 

@@ -1,3 +1,8 @@
+## [1.1.3] - 2026-04-12
+
+### Fixed
+- **Category tabs overflow on narrow windows**: The category button strip (All, Account, Ban/Kick ... Teleport, Tickets) had no clipping — buttons bled outside the window frame when it was resized smaller than ~770px. Wrapped the strip in a horizontal `ScrollFrame` (`catSF`). Buttons now clip cleanly at the window edge and the strip can be scrolled left/right with the mouse wheel. The command list scroll frame anchor was updated from `catBar` to `catSF`.
+
 ## [1.1.2] - 2026-04-12
 
 ### Fixed
