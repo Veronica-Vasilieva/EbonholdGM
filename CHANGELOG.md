@@ -1,3 +1,8 @@
+## [1.0.7] - 2026-04-12
+
+### Fixed
+- **Players — "Use Target" button outside window**: The search input's right anchor was only `-PAD-60` from the panel edge, leaving only 68px for buttons. Search (56px) + Use Target (80px) + gaps (8px) = 144px required. Extended the input right offset to `-PAD-148` so both buttons fit inside the frame.
+
 ## [1.0.6] - 2026-04-12
 
 ### Fixed

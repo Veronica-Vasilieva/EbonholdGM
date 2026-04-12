@@ -187,7 +187,7 @@ function M:CreatePanel(parent)
         DisplayPlayerInfo(Utils.Trim(name))
     end, nil)
     _nameInput:SetPoint("TOPLEFT",  header, "BOTTOMLEFT",  0,   -6)
-    _nameInput:SetPoint("TOPRIGHT", _panel, "TOPRIGHT",  -PAD - 60, -PAD - 22)
+    _nameInput:SetPoint("TOPRIGHT", _panel, "TOPRIGHT",  -PAD - 148, -PAD - 22)
     _nameInput:SetHeight(T.INPUT_H)
 
     local searchBtn = UI:CreateButton(_panel, "Search", false, function()

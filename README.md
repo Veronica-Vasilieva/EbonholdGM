@@ -2,9 +2,31 @@
 
 Professional GM & Admin control panel for WoW 3.3.5a (TrinityCore / AzerothCore).
 
-![Version](https://img.shields.io/badge/version-1.0.6-gold)
+![Version](https://img.shields.io/badge/version-1.0.7-gold)
 ![Interface](https://img.shields.io/badge/interface-30300-blue)
 ![WoW](https://img.shields.io/badge/WoW-3.3.5a-blueviolet)
+
+---
+
+## Screenshots
+
+### Commands — Searchable Command Palette
+![Commands](screenshots/commands.png)
+
+### Players — Player Management
+![Players](screenshots/players.png)
+
+### Tickets — GM Ticket System
+![Tickets](screenshots/tickets.png)
+
+### Chat Monitor
+![Chat](screenshots/chat.png)
+
+### Teleport
+![Teleport](screenshots/teleport.png)
+
+### Macros
+![Macros](screenshots/macros.png)
 
 ---
 

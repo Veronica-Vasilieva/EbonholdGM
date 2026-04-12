@@ -2,7 +2,7 @@
 ## Title: |cFF4FC3F7Ebonhold|r|cFFFFD700GM|r
 ## Notes: Professional GM & Admin control panel for TrinityCore/AzerothCore
 ## Author: Ebonhold
-## Version: 1.0.6
+## Version: 1.0.7
 ## SavedVariables: EbonholdGM_DB
 
 Core\Init.lua
