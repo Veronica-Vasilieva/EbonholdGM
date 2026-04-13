@@ -78,6 +78,9 @@ function M:RenderList()
             row:SetHeight(ROW_H)
             row:EnableMouse(true)
             row:SetBackdrop(T.BACKDROP_FLAT)
+            -- Per-row data; scripts are set once and read these fields.
+            row._idx   = 0
+            row._bgCol = c.BG_ROW
 
             local nameLbl = row:CreateFontString(nil, "OVERLAY")
             nameLbl:SetFont(T.FONT_BOLD, 11)
@@ -101,6 +104,26 @@ function M:RenderList()
             sep:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
             T.SetSolidColor(sep, T.RGBA(c.BORDER_SEP))
 
+            -- Scripts set ONCE - read row._idx / row._bgCol at call time.
+            row:SetScript("OnEnter", function(self)
+                if _selectedIndex ~= row._idx then
+                    self:SetBackdropColor(T.RGBA(c.BG_ROW_HOV))
+                end
+            end)
+            row:SetScript("OnLeave", function(self)
+                if _selectedIndex ~= row._idx then
+                    self:SetBackdropColor(T.RGBA(row._bgCol))
+                end
+            end)
+            row:SetScript("OnClick", function()
+                _selectedIndex = row._idx
+                M:RenderList()
+                M:LoadEditorForIndex(row._idx)
+            end)
+            runBtn:SetScript("OnClick", function()
+                ExecuteMacro(GetMacros()[row._idx])
+            end)
+
             _listRowPool[i] = row
         end
 
@@ -108,32 +131,16 @@ function M:RenderList()
         row:SetPoint("TOPRIGHT", sc, "TOPRIGHT", 0, -yOff)
         row:Show()
 
+        -- Update data fields (no closures allocated)
         local bgCol = (i % 2 == 0) and c.BG_ROW_ALT or c.BG_ROW
         local isSelected = (_selectedIndex == i)
+        row._idx   = i
+        row._bgCol = bgCol
         row:SetBackdropColor(isSelected and T.RGBA(c.BG_ROW_HOV) or T.RGBA(bgCol))
         row:SetBackdropBorderColor(0, 0, 0, 0)
 
         row._nameLbl:SetText(macro.name)
         row._cntLbl:SetText(#macro.commands .. " command(s)")
-
-        row:SetScript("OnEnter", function(self)
-            if _selectedIndex ~= i then self:SetBackdropColor(T.RGBA(c.BG_ROW_HOV)) end
-        end)
-        row:SetScript("OnLeave", function(self)
-            if _selectedIndex ~= i then self:SetBackdropColor(T.RGBA(bgCol)) end
-        end)
-
-        local capturedI = i
-        row:SetScript("OnClick", function()
-            _selectedIndex = capturedI
-            M:RenderList()
-            M:LoadEditorForIndex(capturedI)
-        end)
-
-        local capturedMacro = macro
-        row._runBtn:SetScript("OnClick", function()
-            ExecuteMacro(capturedMacro)
-        end)
 
         yOff = yOff + ROW_H
     end

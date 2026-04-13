@@ -215,6 +215,10 @@ local function RenderRows()
             row = CreateFrame("Button", nil, _scrollChild)
             row:SetHeight(ROW_H)
             row:SetBackdrop(T.BACKDROP_FLAT)
+            -- Per-row data fields; all callbacks read these instead of
+            -- capturing per-render closures. Scripts are set once here.
+            row._entry = nil
+            row._bgCol = c.BG_ROW
 
             -- Command text
             local cmdLabel = row:CreateFontString(nil, "OVERLAY")
@@ -264,6 +268,23 @@ local function RenderRows()
             sep:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
             T.SetSolidColor(sep, T.RGBA(c.BORDER_SEP))
 
+            -- Scripts set ONCE - read row._entry / row._bgCol at call time.
+            row:SetScript("OnEnter", function(self) self:SetBackdropColor(T.RGBA(c.BG_ROW_HOV)) end)
+            row:SetScript("OnLeave", function(self) self:SetBackdropColor(T.RGBA(row._bgCol)) end)
+            row:SetScript("OnClick", function(self)
+                if row._entry then M:ExecuteEntry(row._entry) end
+            end)
+            execBtn:SetScript("OnClick", function()
+                if row._entry then M:ExecuteEntry(row._entry) end
+            end)
+            starBtn:SetScript("OnClick", function()
+                if not row._entry then return end
+                local nowFav = GM.Config:ToggleFavCommand(row._entry.cmd)
+                row._starTex:SetText(nowFav and "|cFFFFD700*|r" or "|cFF444444-|r")
+                FilterCommands(_searchText, _activeCategory)
+                RenderRows()
+            end)
+
             _rowFrames[i] = row
         end
 
@@ -272,9 +293,11 @@ local function RenderRows()
         row:SetPoint("TOPRIGHT", _scrollChild, "TOPRIGHT", 0, -yOff)
         row:Show()
 
-        -- Populate data
+        -- Update data fields (no closures allocated)
         local isFav = GM.Config:IsFavCommand(entry.cmd)
         local bgCol = (i % 2 == 0) and c.BG_ROW_ALT or c.BG_ROW
+        row._entry = entry
+        row._bgCol = bgCol
 
         row:SetBackdropColor(T.RGBA(bgCol))
         row:SetBackdropBorderColor(0, 0, 0, 0)
@@ -285,31 +308,6 @@ local function RenderRows()
         row._desc:SetText("|cFF999999" .. entry.desc .. "|r")
         row._cat:SetText("|cFF555555" .. (entry.category or "") .. "|r")
         row._starTex:SetText(isFav and "|cFFFFD700*|r" or "|cFF444444-|r")
-
-        -- Hover
-        local capturedBg = bgCol
-        row:SetScript("OnEnter", function(self) self:SetBackdropColor(T.RGBA(c.BG_ROW_HOV)) end)
-        row:SetScript("OnLeave", function(self) self:SetBackdropColor(T.RGBA(capturedBg)) end)
-
-        -- Row click — execute or prompt for params
-        local capturedEntry = entry
-        row:SetScript("OnClick", function(self)
-            M:ExecuteEntry(capturedEntry)
-        end)
-
-        -- Exec button click
-        row._execBtn:SetScript("OnClick", function()
-            M:ExecuteEntry(capturedEntry)
-        end)
-
-        -- Star button
-        row._starBtn:SetScript("OnClick", function()
-            local nowFav = GM.Config:ToggleFavCommand(capturedEntry.cmd)
-            row._starTex:SetText(nowFav and "|cFFFFD700*|r" or "|cFF444444-|r")
-            -- Re-sort so favorites float back up
-            FilterCommands(_searchText, _activeCategory)
-            RenderRows()
-        end)
 
         yOff = yOff + ROW_H
     end
@@ -359,7 +357,11 @@ function M:OnSearch(text)
 end
 
 function M:OnShow()
-    RenderRows()
+    -- Only render on first visit; subsequent tab switches reuse existing rows.
+    if M._dirty ~= false then
+        RenderRows()
+        M._dirty = false
+    end
 end
 
 function M:OnResize()
@@ -517,10 +519,6 @@ function M:CreatePanel(parent)
     _noResults:SetText("No commands match your search.")
     _noResults:SetPoint("CENTER", scrollFrame, "CENTER", 0, 0)
     _noResults:Hide()
-
-    -- Initial render
-    FilterCommands("", nil)
-    RenderRows()
 
     return _panel
 end

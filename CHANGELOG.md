@@ -1,3 +1,11 @@
+## [1.1.7] - 2026-04-13
+
+### Fixed
+- **Tab-switch lag and window lag on Teleport (and Commands, Macros)**: Every call to `RenderList()`/`RenderRows()` was calling `SetScript` inside the render loop, creating brand-new Lua closures for every visible row on every render. 80 Teleport rows x 6 `SetScript` calls = ~480 closure allocations per tab switch; Commands was ~350. After visiting multiple tabs, Lua 5.1's garbage collector ran during interaction causing 0.3-0.5 second pauses. Fix: moved all `SetScript` calls into the row-creation block (runs once per row, ever). Callbacks now read per-row data fields (`row._loc`, `row._entry`, `row._idx`, `row._bgCol`) that are updated each render with no closure allocation.
+- **Redundant re-render on tab switch**: `OnShow()` in Commands and Teleport unconditionally called the full render function on every tab switch, even when nothing had changed. Added a dirty flag so subsequent tab switches are free; re-renders are still triggered directly by search, delete, resize, and other state changes.
+- **Teleport coord strip per-frame OnUpdate removed**: The coord strip had its own `OnUpdate` firing every frame (in addition to the status bar's OnUpdate). Replaced with a one-time update in `OnShow()`. Removes one per-frame script handler from the Teleport panel.
+- **Teleport goInput over-anchored**: `goInput` had both `SetHeight(18)` and a `BOTTOM` anchor, creating conflicting vertical constraints that WoW had to resolve on every frame. Removed the redundant `BOTTOM` anchor.
+
 ## [1.1.6] - 2026-04-13
 
 ### Fixed

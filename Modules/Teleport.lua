@@ -158,6 +158,10 @@ function M:RenderList()
             row = CreateFrame("Frame", nil, _scrollChild)
             row:SetHeight(ROW_H)
             row:SetBackdrop(T.BACKDROP_FLAT)
+            -- Per-row data table; all callbacks read these fields instead of
+            -- capturing per-render closures. Scripts are set once here.
+            row._loc   = {}
+            row._bgCol = c.BG_ROW
 
             -- Name label
             local nameLbl = row:CreateFontString(nil, "OVERLAY")
@@ -197,7 +201,35 @@ function M:RenderList()
             sep:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
             T.SetSolidColor(sep, T.RGBA(c.BORDER_SEP))
 
-            row:SetScript("OnEnter", function(self) self:SetBackdropColor(T.RGBA(c.BG_ROW_HOV)) end)
+            -- Scripts set ONCE - read row._loc / row._bgCol at call time.
+            -- No new closures are created on subsequent renders.
+            row:SetScript("OnEnter", function(self)
+                self:SetBackdropColor(T.RGBA(c.BG_ROW_HOV))
+            end)
+            row:SetScript("OnLeave", function(self)
+                self:SetBackdropColor(T.RGBA(row._bgCol))
+            end)
+            goBtn:SetScript("OnClick", function()
+                Utils.ExecCommand(".tele " .. row._loc.cmd)
+            end)
+            sendBtn:SetScript("OnClick", function()
+                local target = UnitName("target")
+                if target then
+                    Utils.ExecCommand(".tele name " .. target .. " " .. row._loc.cmd)
+                else
+                    GM:Print("No target selected for Send.")
+                end
+            end)
+            Utils.AddTooltip(sendBtn, "Teleport target to this location")
+            delBtn:SetScript("OnClick", function()
+                local customs = GM.Config.db.customLocations
+                for j = #customs, 1, -1 do
+                    if customs[j].name == row._loc.name then
+                        table.remove(customs, j)
+                    end
+                end
+                M:RenderList()
+            end)
 
             _rowPool[i] = row
         end
@@ -206,40 +238,19 @@ function M:RenderList()
         row:SetPoint("TOPRIGHT", _scrollChild, "TOPRIGHT", 0, -yOff)
         row:Show()
 
+        -- Update data fields (no closures allocated)
         local bgCol = (i % 2 == 0) and c.BG_ROW_ALT or c.BG_ROW
+        row._bgCol     = bgCol
+        row._loc.cmd   = loc.cmd
+        row._loc.name  = loc.name
+
         row:SetBackdropColor(T.RGBA(bgCol))
         row:SetBackdropBorderColor(0, 0, 0, 0)
-        row:SetScript("OnLeave", function(self) self:SetBackdropColor(T.RGBA(bgCol)) end)
-
         row._nameLbl:SetText(loc.custom and ("|cFF80FF80" .. loc.name .. "|r") or loc.name)
         row._badge:SetText(loc.custom and "[custom]" or "")
 
-        local capturedLoc = loc
-        row._goBtn:SetScript("OnClick", function()
-            Utils.ExecCommand(".tele " .. capturedLoc.cmd)
-        end)
-        row._sendBtn:SetScript("OnClick", function()
-            local target = UnitName("target")
-            if target then
-                Utils.ExecCommand(".tele name " .. target .. " " .. capturedLoc.cmd)
-            else
-                GM:Print("No target selected for Send.")
-            end
-        end)
-        Utils.AddTooltip(row._sendBtn, "Teleport target to this location")
-
         if loc.custom then
             row._delBtn:Show()
-            row._delBtn:SetScript("OnClick", function()
-                -- Remove from custom locations
-                local customs = GM.Config.db.customLocations
-                for j = #customs, 1, -1 do
-                    if customs[j].name == capturedLoc.name then
-                        table.remove(customs, j)
-                    end
-                end
-                M:RenderList()
-            end)
         else
             row._delBtn:Hide()
         end
@@ -256,9 +267,7 @@ end
 
 local function SaveCurrentLocation()
     Utils.InputPopup("Save current location as:", Utils.ZoneName() .. " Spot", function(name)
-        -- We can't directly get world coords without a zone change, so use .tele add
         Utils.ExecCommand(".tele add " .. name)
-        -- Also store in our custom list with the name as cmd
         local customs = GM.Config.db.customLocations
         table.insert(customs, { name = name, cmd = name })
         M:RenderList()
@@ -275,7 +284,22 @@ function M:OnLoad()
 end
 
 function M:OnShow()
-    M:RenderList()
+    -- Update the coord strip once on show (no per-frame OnUpdate needed).
+    if M._coordLbl then
+        local x, y = Utils.PlayerCoords()
+        if x then
+            M._coordLbl:SetText(string.format(
+                "Coords: |cFFFFFFFF%.2f, %.2f|r   Zone: |cFFFFFFFF%s|r",
+                x, y, Utils.ZoneName()))
+        else
+            M._coordLbl:SetText("Zone: |cFFFFFFFF" .. Utils.ZoneName() .. "|r")
+        end
+    end
+    -- Only render when data may have changed; subsequent tab switches are free.
+    if M._dirty ~= false then
+        M:RenderList()
+        M._dirty = false
+    end
 end
 
 function M:OnResize()
@@ -316,23 +340,10 @@ function M:CreatePanel(parent)
     coordStrip:SetPoint("TOPLEFT",  toolbar, "BOTTOMLEFT",  0, -4)
     coordStrip:SetPoint("TOPRIGHT", toolbar, "BOTTOMRIGHT", 0, -4)
 
+    -- Coord label updated once in OnShow - no per-frame OnUpdate handler.
     local coordLbl = UI:CreateLabel(coordStrip, "", 10, "TEXT_DIM")
     coordLbl:SetPoint("LEFT", coordStrip, "LEFT", PAD, 0)
-
-    -- Update coords every 1 second
-    local tick = 0
-    coordStrip:SetScript("OnUpdate", function(self, elapsed)
-        tick = tick + elapsed
-        if tick >= 1 then
-            tick = 0
-            local x, y = Utils.PlayerCoords()
-            if x then
-                coordLbl:SetText(string.format("Coords: |cFFFFFFFF%.2f, %.2f|r   Zone: |cFFFFFFFF%s|r", x, y, Utils.ZoneName()))
-            else
-                coordLbl:SetText("Zone: |cFFFFFFFF" .. Utils.ZoneName() .. "|r")
-            end
-        end
-    end)
+    M._coordLbl = coordLbl
 
     -- Quick .go input
     local goLabel = UI:CreateLabel(coordStrip, ".go:", 10, "TEXT_DIM")
@@ -343,11 +354,13 @@ function M:CreatePanel(parent)
             Utils.ExecCommand(".go " .. text)
         end
     end)
-    goInput:SetPoint("LEFT",   goLabel, "RIGHT", 4, 0)
-    goInput:SetPoint("RIGHT",  coordStrip, "RIGHT", -PAD, 0)
+    -- Three anchors only: LEFT, RIGHT, TOP + fixed height.
+    -- Removing the redundant BOTTOM anchor avoids an over-constrained frame
+    -- that forces WoW to resolve conflicting vertical constraints every frame.
+    goInput:SetPoint("LEFT",  goLabel,    "RIGHT", 4, 0)
+    goInput:SetPoint("RIGHT", coordStrip, "RIGHT", -PAD, 0)
     goInput:SetHeight(18)
-    goInput:SetPoint("TOP",    coordStrip, "TOP",    0, -4)
-    goInput:SetPoint("BOTTOM", coordStrip, "BOTTOM", 0, 4)
+    goInput:SetPoint("TOP",   coordStrip, "TOP",   0, -4)
 
     -- -----------------------------------------------------------------------
     -- Search bar
@@ -368,7 +381,9 @@ function M:CreatePanel(parent)
     sf:SetPoint("BOTTOMRIGHT", _panel,       "BOTTOMRIGHT", -20, PAD)
     _scrollChild = sc
 
-    M:RenderList()
+    -- Panel returned without an initial RenderList() call.
+    -- OnShow() renders on first visit; subsequent tab switches reuse
+    -- the existing rows without re-rendering (dirty flag).
 
     return _panel
 end
