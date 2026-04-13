@@ -251,8 +251,16 @@ function UI:CreateScrollFrame(parent, name)
     -- Keep child width in sync with the scroll frame.
     -- Subtract 20px for the UIPanelScrollFrameTemplate scrollbar so row
     -- buttons at the right edge are never hidden behind it.
+    -- Use a 2px threshold so floating-point anchor jitter during window
+    -- movement does not trigger a child:SetWidth cascade (which forces WoW
+    -- to re-evaluate every TOPRIGHT anchor in the scroll child -- very
+    -- expensive when there are 80+ rows).
     sf:SetScript("OnSizeChanged", function(self, w, h)
-        if w and w > 0 then child:SetWidth(math.max(w - 20, 1)) end
+        if not (w and w > 0) then return end
+        local prev = sf._lastW or 0
+        if math.abs(w - prev) < 2 then return end
+        sf._lastW = w
+        child:SetWidth(math.max(w - 20, 1))
     end)
 
     sf._child = child

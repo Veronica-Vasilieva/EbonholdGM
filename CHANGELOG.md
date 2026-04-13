@@ -1,3 +1,8 @@
+## [1.1.6] - 2026-04-13
+
+### Fixed
+- **Teleport (and all list modules) lag during window movement**: `CreateScrollFrame`'s `OnSizeChanged` had no jitter guard. During window movement, WoW's floating-point anchor recalculation fires `OnSizeChanged` every frame, which called `child:SetWidth(w-20)`. Changing the scroll child's width forces WoW to re-evaluate the `TOPRIGHT` anchor on every row frame. With 80+ rows in Teleport this meant hundreds of anchor recalculations per frame, causing severe lag. Added a 2px threshold guard identical to the one in `content:OnSizeChanged`; genuine resize changes still propagate, jitter does not.
+
 ## [1.1.5] - 2026-04-13
 
 ### Fixed
