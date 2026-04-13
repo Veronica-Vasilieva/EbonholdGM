@@ -18,56 +18,157 @@ local PAD = T.PAD
 
 -- ---------------------------------------------------------------------------
 -- Ticket data
--- Format: { id, player, summary, status, age, assignedTo, notes }
+-- Format: { id, player, summary, full, status, age, assignedTo, notes }
 -- status: "open" | "assigned" | "escalated" | "closed"
 -- ---------------------------------------------------------------------------
 local _tickets    = {}
-local _selected   = nil  -- currently selected ticket
+local _selected   = nil   -- currently selected ticket
 local _rowFrames  = {}
 local _listening  = false  -- are we currently parsing ticket list output?
+local _pendingEntry = nil  -- holds a partially-parsed ticket awaiting its Message: line
 
 -- UI refs
-local _panel, _scrollChild, _detailPanel
+local _panel, _scrollChild, _detailPanel, _statusLbl
 local _detailName, _detailSummary, _detailStatus, _detailNotes, _detailNoteInput
 
 -- ---------------------------------------------------------------------------
--- Chat parser — reads .ticket list output from CHAT_MSG_SYSTEM
--- Example lines (TrinityCore format):
---   "Tickets currently open:"
---   "Ticket #5 by Thrall. Opened 00:03:26 ago. Not assigned. Message: help pls"
+-- Parser helpers
 -- ---------------------------------------------------------------------------
 
-local function ParseTicketLine(msg)
-    -- Match: Ticket #N by Name. Opened TIME ago. [...]. Message: TEXT
-    local id, name, age, msgText = msg:match("Ticket #(%d+) by (%S+)%. Opened ([^.]+) ago%. .+Message: (.+)")
-    if id then
-        local assigned = msg:match("Assigned to ([^.]+)%.") or nil
-        _tickets[tonumber(id)] = {
-            id         = tonumber(id),
-            player     = name,
-            summary    = Utils.Truncate(msgText or "", 80),
-            full       = msgText or "",
-            status     = assigned and "assigned" or "open",
-            age        = age or "?",
-            assignedTo = assigned,
-            notes      = "",
-        }
-        return true
-    end
-    return false
+-- Strip WoW color/texture escape codes so regexes see plain text.
+local function Strip(msg)
+    return (msg
+        :gsub("|c%x%x%x%x%x%x%x%x", "")
+        :gsub("|r", "")
+        :gsub("|T[^|]+|t", "")
+        :gsub("|n", " "))
 end
 
-local function OnSystemMsg(msg)
+-- Try to extract ticket header data from a single (already-stripped) message.
+-- Returns a partial ticket table, or nil if the line isn't a ticket header.
+local function ParseHeader(msg)
+    local id, name, age, msgText
+
+    -- Format A (combined): "Ticket #N by Name. Opened TIME ago. ... Message: TEXT"
+    id, name, age, msgText = msg:match("Ticket #(%d+) by (%S+)%. Opened ([^.]+) ago%..+Message:%s*(.+)")
+    if id then
+        return { id=tonumber(id), player=name, age=age, msgText=msgText }
+    end
+
+    -- Format B (header only): "Ticket #N by Name. Opened TIME ago. ..."
+    id, name, age = msg:match("Ticket #(%d+) by (%S+)%. Opened ([^.]+) ago%.")
+    if id then
+        return { id=tonumber(id), player=name, age=age, msgText=nil }
+    end
+
+    -- Format C (dash separator): "#N - Name. Opened TIME ago."
+    id, name, age = msg:match("#(%d+) %- (%S+)%. Opened ([^.]+) ago%.")
+    if not id then
+        id, name = msg:match("#(%d+) %- (%S+)")
+        if id then age = msg:match("(%d+:%d+:%d+)") or "?" end
+    end
+    if id then
+        msgText = msg:match("Message:%s*(.+)")
+        return { id=tonumber(id), player=name or "?", age=age or "?", msgText=msgText }
+    end
+
+    -- Format D (loose): any line that contains "Ticket #N" - last-resort grab
+    id = msg:match("Ticket #(%d+)")
+    if id then
+        name    = msg:match("[Bb]y (%S+)") or msg:match("[Ff]rom (%S+)") or "?"
+        age     = msg:match("(%d+:%d+:%d+)") or "?"
+        msgText = msg:match("Message:%s*(.+)")
+        return { id=tonumber(id), player=name, age=age, msgText=msgText }
+    end
+
+    return nil
+end
+
+local function FinaliseEntry(entry, msgText)
+    local txt = msgText or entry.msgText or ""
+    local assigned = entry.assignedTo
+    _tickets[entry.id] = {
+        id         = entry.id,
+        player     = entry.player,
+        age        = entry.age,
+        summary    = Utils.Truncate(txt, 80),
+        full       = txt,
+        status     = assigned and "assigned" or "open",
+        assignedTo = assigned,
+        notes      = entry.notes or "",
+    }
+end
+
+-- ---------------------------------------------------------------------------
+-- CHAT_MSG_SYSTEM listener
+-- ---------------------------------------------------------------------------
+
+local function OnSystemMsg(rawMsg)
     if not _listening then return end
-    if msg:find("^Ticket #") then
-        ParseTicketLine(msg)
+    local msg = Strip(rawMsg)
+
+    -- ---- continuation: Message: line following a header -------------------
+    if _pendingEntry and msg:find("Message:") then
+        local txt = msg:match("Message:%s*(.+)") or ""
+        FinaliseEntry(_pendingEntry, txt)
+        _pendingEntry = nil
         M:RenderList()
-    elseif msg:find("No open tickets") or msg:find("^There are no") then
-        _tickets = {}
+        if _statusLbl then _statusLbl:SetText("|cFFFFD700" .. #_tickets .. " ticket(s) loaded|r") end
+        return
+    end
+
+    -- ---- new ticket header line -------------------------------------------
+    if msg:find("Ticket #") or msg:find("#%d+ %- ") then
+        -- Flush any incomplete pending entry (server didn't send a Message: line for it)
+        if _pendingEntry then
+            FinaliseEntry(_pendingEntry, "")
+            _pendingEntry = nil
+            M:RenderList()
+        end
+
+        local entry = ParseHeader(msg)
+        if entry then
+            -- Also check for assignment in the raw line
+            entry.assignedTo = msg:match("Assigned to ([^.,]+)") or nil
+            if entry.msgText ~= nil then
+                -- Complete single-line ticket
+                FinaliseEntry(entry, entry.msgText)
+                M:RenderList()
+                if _statusLbl then _statusLbl:SetText("|cFFFFD700" .. #_tickets .. " ticket(s) loaded|r") end
+            else
+                -- Wait for the Message: line
+                _pendingEntry = entry
+            end
+        end
+        return
+    end
+
+    -- ---- end-of-list markers ----------------------------------------------
+    if msg:find("[Nn]o open tickets") or msg:find("[Nn]o tickets")
+    or msg:find("[Tt]here are no")    or msg:find("0 ticket") then
+        if _pendingEntry then FinaliseEntry(_pendingEntry, "") ; _pendingEntry = nil end
+        _listening = false
         M:RenderList()
+        if _statusLbl then
+            local n = 0
+            for _ in pairs(_tickets) do n = n + 1 end
+            _statusLbl:SetText(n == 0 and "|cFF888888No open tickets|r"
+                                      or "|cFFFFD700" .. n .. " ticket(s) loaded|r")
+        end
+        return
+    end
+
+    if msg:find("[Aa]ll tickets shown") or msg:find("[Ss]howing all")
+    or msg:find("[Ll]ist of .-tickets") or msg:find("[Tt]icket list") then
+        if _pendingEntry then FinaliseEntry(_pendingEntry, "") ; _pendingEntry = nil end
         _listening = false
-    elseif msg:find("^All tickets shown") or msg:find("^Showing all") then
-        _listening = false
+        M:RenderList()
+        if _statusLbl then
+            local n = 0
+            for _ in pairs(_tickets) do n = n + 1 end
+            _statusLbl:SetText("|cFFFFD700" .. n .. " ticket(s) loaded|r")
+        end
+        return
     end
 end
 
@@ -100,6 +201,9 @@ function M:RenderList()
             row = CreateFrame("Button", nil, _scrollChild)
             row:SetHeight(ROW_H)
             row:SetBackdrop(T.BACKDROP_FLAT)
+            -- Per-row data; scripts set once.
+            row._ticket = nil
+            row._bgCol  = c.BG_ROW
 
             -- Status stripe
             local stripe = row:CreateTexture(nil, "ARTWORK")
@@ -142,6 +246,13 @@ function M:RenderList()
             sep:SetPoint("BOTTOMRIGHT", row, "BOTTOMRIGHT", 0, 0)
             T.SetSolidColor(sep, T.RGBA(c.BORDER_SEP))
 
+            -- Scripts set ONCE; read row._ticket / row._bgCol at call time.
+            row:SetScript("OnEnter", function(self) self:SetBackdropColor(T.RGBA(c.BG_ROW_HOV)) end)
+            row:SetScript("OnLeave", function(self) self:SetBackdropColor(T.RGBA(row._bgCol)) end)
+            row:SetScript("OnClick", function()
+                if row._ticket then M:SelectTicket(row._ticket) end
+            end)
+
             _rowFrames[i] = row
         end
 
@@ -150,12 +261,15 @@ function M:RenderList()
         row:SetPoint("TOPRIGHT", _scrollChild, "TOPRIGHT", 0, -yOff)
         row:Show()
 
-        -- Fill data
+        -- Update data fields (no closures allocated)
         local bgCol = (i % 2 == 0) and c.BG_ROW_ALT or c.BG_ROW
+        row._bgCol   = bgCol
+        row._ticket  = ticket
+
         row:SetBackdropColor(T.RGBA(bgCol))
         row:SetBackdropBorderColor(0, 0, 0, 0)
 
-        -- Status color
+        -- Status color stripe
         local statusCol = c.TEXT_GREEN
         if ticket.status == "assigned"  then statusCol = c.TEXT_BLUE  end
         if ticket.status == "escalated" then statusCol = c.TEXT_ORANGE end
@@ -167,14 +281,6 @@ function M:RenderList()
             .. (ticket.assignedTo and " |cFF4FC3F7-> " .. ticket.assignedTo .. "|r" or ""))
         row._ageLbl:SetText(ticket.age)
         row._sumLbl:SetText("|cFF888888" .. ticket.summary .. "|r")
-
-        row:SetScript("OnEnter", function(self) self:SetBackdropColor(T.RGBA(c.BG_ROW_HOV)) end)
-        row:SetScript("OnLeave", function(self) self:SetBackdropColor(T.RGBA(bgCol)) end)
-
-        local capturedTicket = ticket
-        row:SetScript("OnClick", function()
-            M:SelectTicket(capturedTicket)
-        end)
 
         yOff = yOff + ROW_H
     end
@@ -192,7 +298,7 @@ function M:SelectTicket(ticket)
     _detailPanel:Show()
 
     _detailName:SetText("|cFFFFD700Ticket #" .. ticket.id .. "|r  from  |cFFFFFFFF" .. ticket.player .. "|r")
-    _detailSummary:SetText(ticket.full or ticket.summary)
+    _detailSummary:SetText(ticket.full ~= "" and ticket.full or ticket.summary)
 
     local statusStr = ticket.status:upper()
     local statusColors = { open="FF4444", assigned="4FC3F7", escalated="FFA040", closed="888888" }
@@ -212,7 +318,6 @@ function M:OnLoad()
 end
 
 function M:OnShow()
-    -- Auto-refresh when panel is shown
     self:Refresh()
 end
 
@@ -221,8 +326,10 @@ function M:OnResize()
 end
 
 function M:Refresh()
-    _tickets   = {}
-    _listening = true
+    _tickets      = {}
+    _pendingEntry = nil
+    _listening    = true
+    if _statusLbl then _statusLbl:SetText("|cFF888888Loading...|r") end
     Utils.ExecCommand(".ticket list")
     M:RenderList()
 end
@@ -252,6 +359,10 @@ function M:CreatePanel(parent)
     end)
     closedBtn:SetSize(60, 22)
     closedBtn:SetPoint("RIGHT", refreshBtn, "LEFT", -4, 0)
+
+    -- Status label (shows "Loading...", "N tickets", "No open tickets")
+    _statusLbl = UI:CreateLabel(toolbar, "", 10, "TEXT_DIM")
+    _statusLbl:SetPoint("LEFT", titleLbl, "RIGHT", 12, 0)
 
     -- -----------------------------------------------------------------------
     -- Ticket list (left column)
@@ -320,7 +431,6 @@ function M:CreatePanel(parent)
     _detailNoteInput:SetPoint("BOTTOMRIGHT", _detailPanel, "BOTTOMRIGHT", -PAD, PAD + 30)
 
     -- Action buttons row
-    local btnY = -(PAD)
     local actions = {
         { label = "Go To Player", fn = function()
             if _selected then Utils.ExecCommand(".appear " .. _selected.player) end
@@ -329,7 +439,12 @@ function M:CreatePanel(parent)
             if _selected then Utils.ExecCommand(".summon " .. _selected.player) end
         end },
         { label = "Whisper",      fn = function()
-            if _selected then if DEFAULT_CHAT_FRAME and DEFAULT_CHAT_FRAME.editBox then DEFAULT_CHAT_FRAME.editBox:SetText("/w " .. _selected.player .. " ") DEFAULT_CHAT_FRAME.editBox:SetFocus() end end
+            if _selected then
+                if DEFAULT_CHAT_FRAME and DEFAULT_CHAT_FRAME.editBox then
+                    DEFAULT_CHAT_FRAME.editBox:SetText("/w " .. _selected.player .. " ")
+                    DEFAULT_CHAT_FRAME.editBox:SetFocus()
+                end
+            end
         end },
         { label = "Claim",        fn = function()
             if _selected then
@@ -338,6 +453,7 @@ function M:CreatePanel(parent)
                 _selected.assignedTo = me
                 _selected.status = "assigned"
                 M:SelectTicket(_selected)
+                M:RenderList()
             end
         end },
         { label = "Respond",      fn = function()
@@ -351,13 +467,11 @@ function M:CreatePanel(parent)
             if _selected then
                 Utils.ExecCommand(".ticket close " .. _selected.id, true,
                     "Close ticket #" .. _selected.id .. "?")
-                if _selected then
-                    _selected.status = "closed"
-                    _tickets[_selected.id] = nil
-                    _detailPanel:Hide()
-                    _selected = nil
-                    M:RenderList()
-                end
+                _selected.status = "closed"
+                _tickets[_selected.id] = nil
+                _detailPanel:Hide()
+                _selected = nil
+                M:RenderList()
             end
         end, danger = true },
     }

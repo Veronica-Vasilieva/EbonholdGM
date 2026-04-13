@@ -1,3 +1,10 @@
+## [1.1.8] - 2026-04-13
+
+### Fixed
+- **Tickets panel never showed tickets**: Three compounding bugs prevented any ticket data from appearing. (1) `msg:find("^Ticket #")` used a `^` start-anchor — any leading space or WoW color escape (`|cFF...`) caused the check to silently fail. (2) The single regex tried to match both the header line and `Message: text` in one string, but TrinityCore sends them as two separate `CHAT_MSG_SYSTEM` events; the combined pattern therefore never matched. (3) No color-code stripping, so `|cFFFFFF00Ticket #1|r by ...` failed every pattern match. Fix: added `Strip()` to remove `|c|r|T` codes before processing; rewrote the parser as a two-phase state machine (`_pendingEntry`) that matches the header on one event and the `Message:` continuation on the next; added four fallback format patterns (Format A-D) in order of specificity so the widest variety of TrinityCore/AzerothCore output is handled.
+- **Tickets SetScript in render loop**: Same closure-per-render allocation issue fixed in v1.1.7 for other modules; applied the data-field pattern here too.
+- **Added status label** next to the panel title showing "Loading...", "N ticket(s) loaded", or "No open tickets" so GMs know the request was sent and what came back.
+
 ## [1.1.7] - 2026-04-13
 
 ### Fixed
