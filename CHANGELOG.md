@@ -1,3 +1,8 @@
+## [1.1.5] - 2026-04-13
+
+### Fixed
+- **Window lag/teleporting when moving**: `content:OnSizeChanged` was firing `RenderRows()` ~60 times per second during window movement due to WoW 3.3.5a floating-point anchor jitter. Added `UI._isResizing` flag (set in resize handle `OnMouseDown`, cleared in `OnMouseUp`) so the expensive re-render only runs during an actual resize drag. Added a secondary 2px threshold guard to ignore sub-pixel noise. Moving the window is now smooth.
+
 ## [1.1.4] - 2026-04-12
 
 ### Added

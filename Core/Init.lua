@@ -3,7 +3,7 @@
 
 EbonholdGM = {
     ADDON_NAME    = "EbonholdGM",
-    ADDON_VERSION = "1.1.4",
+    ADDON_VERSION = "1.1.5",
     _modules      = {},   -- name -> module table (ordered by registration)
     _moduleOrder  = {},   -- insertion-ordered names
     UI            = {},   -- UI subsystem (populated by UI files)

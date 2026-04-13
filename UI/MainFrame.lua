@@ -167,11 +167,21 @@ function UI:Build()
     local content = CreateFrame("Frame", nil, win)
     content:SetPoint("TOPLEFT",     win, "TOPLEFT",     T.SIDEBAR_W, -T.TITLEBAR_H)
     content:SetPoint("BOTTOMRIGHT", win, "BOTTOMRIGHT", 0,            T.STATUSBAR_H)
-    UI._content = content
+    UI._content  = content
+    UI._isResizing = false  -- true only while the resize handle is held
 
-    -- Re-render the active module's list whenever the content area changes size
-    -- so that row buttons stay pinned to the correct right edge.
+    -- Re-render the active module's list when the content area changes size.
+    -- IMPORTANT: only fire during an actual resize drag, never during a move.
+    -- Without the _isResizing guard, WoW's floating-point anchor jitter triggers
+    -- OnSizeChanged every frame while the window is being moved, calling
+    -- RenderRows() 60×/sec and causing the window to lag / teleport.
     content:SetScript("OnSizeChanged", function(self, w, h)
+        if not UI._isResizing then return end
+        -- Secondary guard: ignore sub-2px jitter so the threshold is never crossed
+        -- by precision noise alone.
+        local prev = UI._contentW or 0
+        if math.abs(w - prev) < 2 then return end
+        UI._contentW = w
         local mod = UI.activeModule
         if mod and mod.OnResize then
             mod:OnResize(w, h)
@@ -231,9 +241,13 @@ function UI:Build()
     resizeTex:SetAlpha(0.3)
 
     resizeHandle:SetScript("OnMouseDown", function(self, btn)
-        if btn == "LeftButton" then win:StartSizing("BOTTOMRIGHT") end
+        if btn == "LeftButton" then
+            UI._isResizing = true
+            win:StartSizing("BOTTOMRIGHT")
+        end
     end)
     resizeHandle:SetScript("OnMouseUp", function()
+        UI._isResizing = false
         win:StopMovingOrSizing()
         local newW = math.max(win:GetWidth(),  WIN_MIN_W)
         local newH = math.max(win:GetHeight(), WIN_MIN_H)
