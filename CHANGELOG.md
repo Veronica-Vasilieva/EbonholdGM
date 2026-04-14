@@ -1,3 +1,11 @@
+## [1.1.9] - 2026-04-14
+
+### Fixed
+- **Tickets panel — wrong server format assumed**: The v1.1.8 parser assumed `Ticket #N by Name. Opened X ago.` but AzerothCore/TrinityCore actually sends `|cffaaffaaTicket|r:|cffaaccff N.|r ... Created by: Name ... Created: X ago ...` (discovered by reading GMGenie's `Chatreader.lua`). After stripping color codes the format is `Ticket: N. Created by: Name Created: X ago Last change: Y ago [rest]`. Rewrote `ParseHeader` to match this actual format; ticket ID is now a colon-delimited integer, not `#N`.
+- **Wrong ticket message field**: The server sends `Ticket Message: [text]` (not `Message: text` on a separate line as we assumed). Updated parser to extract the message from within the same line, including a `msgOpen` flag for multi-line messages where the closing `]` comes on a subsequent event.
+- **Wrong end-of-list detection**: `"[Ll]ist of .-tickets"` matched `"Showing list of open tickets"` and set `_listening = false` immediately — before any tickets arrived. The server sends this string AFTER all ticket lines as a completion marker. Fixed the pattern to only stop listening on `"[Ss]howing list of open tickets"` (or no-tickets / all-shown messages).
+- **Ticket command channel**: Changed from `GM:SendCommand` (SAY) to `SendChatMessage(".ticket list", "GUILD")` to match GMGenie's proven-working approach.
+
 ## [1.1.8] - 2026-04-13
 
 ### Fixed

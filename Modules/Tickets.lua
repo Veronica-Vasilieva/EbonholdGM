@@ -45,43 +45,44 @@ local function Strip(msg)
 end
 
 -- Try to extract ticket header data from a single (already-stripped) message.
--- Returns a partial ticket table, or nil if the line isn't a ticket header.
+-- After stripping, AzerothCore/TrinityCore sends ticket lines in the form:
+--   "Ticket: N. Created by: Name Created: <age> ago Last change: <mod> ago [rest]"
+-- The [rest] may contain "Assigned to: GMName" and/or "Ticket Message: [text]".
 local function ParseHeader(msg)
-    local id, name, age, msgText
-
-    -- Format A (combined): "Ticket #N by Name. Opened TIME ago. ... Message: TEXT"
-    id, name, age, msgText = msg:match("Ticket #(%d+) by (%S+)%. Opened ([^.]+) ago%..+Message:%s*(.+)")
-    if id then
-        return { id=tonumber(id), player=name, age=age, msgText=msgText }
-    end
-
-    -- Format B (header only): "Ticket #N by Name. Opened TIME ago. ..."
-    id, name, age = msg:match("Ticket #(%d+) by (%S+)%. Opened ([^.]+) ago%.")
-    if id then
-        return { id=tonumber(id), player=name, age=age, msgText=nil }
-    end
-
-    -- Format C (dash separator): "#N - Name. Opened TIME ago."
-    id, name, age = msg:match("#(%d+) %- (%S+)%. Opened ([^.]+) ago%.")
+    -- Primary: match "Ticket: N. Created by: Name Created: <age> ago"
+    local id, name, age = msg:match("Ticket:%s*(%d+)%.%s*Created by:%s*(%S+)%s+Created:%s*(.-)%s+ago")
     if not id then
-        id, name = msg:match("#(%d+) %- (%S+)")
-        if id then age = msg:match("(%d+:%d+:%d+)") or "?" end
+        -- Fallback: minimal match in case age/lastmod format differs
+        id, name = msg:match("Ticket:%s*(%d+)%.%s*Created by:%s*(%S+)")
+        age = msg:match("Created:%s*(.-)%s+ago") or "?"
     end
-    if id then
-        msgText = msg:match("Message:%s*(.+)")
-        return { id=tonumber(id), player=name or "?", age=age or "?", msgText=msgText }
-    end
+    if not id then return nil end
 
-    -- Format D (loose): any line that contains "Ticket #N" - last-resort grab
-    id = msg:match("Ticket #(%d+)")
-    if id then
-        name    = msg:match("[Bb]y (%S+)") or msg:match("[Ff]rom (%S+)") or "?"
-        age     = msg:match("(%d+:%d+:%d+)") or "?"
-        msgText = msg:match("Message:%s*(.+)")
-        return { id=tonumber(id), player=name, age=age, msgText=msgText }
-    end
+    local entry = { id = tonumber(id), player = name, age = age }
 
-    return nil
+    -- Assignment
+    entry.assignedTo = msg:match("Assigned to:%s*(%S+)")
+
+    -- Ticket message on the same line: complete "[text]" or partial "[text..."
+    local msgFull = msg:match("Ticket Message:%s*%[(.-)%]")
+    if msgFull then
+        entry.msgText = msgFull
+        entry.msgOpen = false
+    else
+        local msgPart = msg:match("Ticket Message:%s*%[(.+)")
+        if msgPart then
+            entry.msgText = msgPart
+            entry.msgOpen = true   -- closing ']' expected on a following line
+        end
+        -- else msgText=nil, msgOpen=nil -> no message found on this line
+    end
+    return entry
+end
+
+local function TicketCount()
+    local n = 0
+    for _ in pairs(_tickets) do n = n + 1 end
+    return n
 end
 
 local function FinaliseEntry(entry, msgText)
@@ -99,6 +100,13 @@ local function FinaliseEntry(entry, msgText)
     }
 end
 
+local function StatusDone()
+    if not _statusLbl then return end
+    local n = TicketCount()
+    _statusLbl:SetText(n == 0 and "|cFF888888No open tickets|r"
+                               or "|cFFFFD700" .. n .. " ticket(s) loaded|r")
+end
+
 -- ---------------------------------------------------------------------------
 -- CHAT_MSG_SYSTEM listener
 -- ---------------------------------------------------------------------------
@@ -107,66 +115,62 @@ local function OnSystemMsg(rawMsg)
     if not _listening then return end
     local msg = Strip(rawMsg)
 
-    -- ---- continuation: Message: line following a header -------------------
-    if _pendingEntry and msg:find("Message:") then
-        local txt = msg:match("Message:%s*(.+)") or ""
-        FinaliseEntry(_pendingEntry, txt)
-        _pendingEntry = nil
+    -- ---- multi-line ticket message continuation ---------------------------
+    -- If the previous ticket's message had no closing ']', accumulate lines.
+    if _pendingEntry and _pendingEntry.msgOpen then
+        local closing = msg:match("^(.-)%]")
+        if closing ~= nil then
+            -- Found the closing bracket; finalise now.
+            _pendingEntry.msgText = (_pendingEntry.msgText or "") .. closing
+            _pendingEntry.msgOpen  = false
+            FinaliseEntry(_pendingEntry, _pendingEntry.msgText)
+            _pendingEntry = nil
+            M:RenderList()
+            if _statusLbl then _statusLbl:SetText("|cFFFFD700" .. TicketCount() .. " ticket(s) loaded|r") end
+        else
+            -- Still open; append this line and wait for more.
+            _pendingEntry.msgText = (_pendingEntry.msgText or "") .. " " .. msg
+        end
+        return
+    end
+
+    -- ---- end-of-list markers -----------------------------------------------
+    -- "Showing list of open tickets..." is what the server sends AFTER all ticket
+    -- lines (used by GMGenie as the finalize trigger).
+    if msg:find("[Ss]howing list of open tickets")
+    or msg:find("[Aa]ll tickets shown")
+    or msg:find("[Nn]o open tickets") or msg:find("[Nn]o tickets")
+    or msg:find("[Tt]here are no")    or msg:find("0 ticket") then
+        if _pendingEntry then
+            FinaliseEntry(_pendingEntry, _pendingEntry.msgText or "")
+            _pendingEntry = nil
+        end
+        _listening = false
         M:RenderList()
-        if _statusLbl then _statusLbl:SetText("|cFFFFD700" .. #_tickets .. " ticket(s) loaded|r") end
+        StatusDone()
         return
     end
 
     -- ---- new ticket header line -------------------------------------------
-    if msg:find("Ticket #") or msg:find("#%d+ %- ") then
-        -- Flush any incomplete pending entry (server didn't send a Message: line for it)
+    -- Detect by the stripped "Ticket: N." prefix.
+    if msg:find("Ticket:") and msg:find("Created by:") then
+        -- Flush any previous incomplete entry (no message line arrived).
         if _pendingEntry then
-            FinaliseEntry(_pendingEntry, "")
+            FinaliseEntry(_pendingEntry, _pendingEntry.msgText or "")
             _pendingEntry = nil
-            M:RenderList()
         end
 
         local entry = ParseHeader(msg)
         if entry then
-            -- Also check for assignment in the raw line
-            entry.assignedTo = msg:match("Assigned to ([^.,]+)") or nil
-            if entry.msgText ~= nil then
-                -- Complete single-line ticket
+            if entry.msgText ~= nil and not entry.msgOpen then
+                -- Complete ticket on one line.
                 FinaliseEntry(entry, entry.msgText)
                 M:RenderList()
-                if _statusLbl then _statusLbl:SetText("|cFFFFD700" .. #_tickets .. " ticket(s) loaded|r") end
+                if _statusLbl then _statusLbl:SetText("|cFFFFD700" .. TicketCount() .. " ticket(s) loaded|r") end
             else
-                -- Wait for the Message: line
+                -- Message is absent or still open; hold and wait.
                 _pendingEntry = entry
             end
-        end
-        return
-    end
-
-    -- ---- end-of-list markers ----------------------------------------------
-    if msg:find("[Nn]o open tickets") or msg:find("[Nn]o tickets")
-    or msg:find("[Tt]here are no")    or msg:find("0 ticket") then
-        if _pendingEntry then FinaliseEntry(_pendingEntry, "") ; _pendingEntry = nil end
-        _listening = false
-        M:RenderList()
-        if _statusLbl then
-            local n = 0
-            for _ in pairs(_tickets) do n = n + 1 end
-            _statusLbl:SetText(n == 0 and "|cFF888888No open tickets|r"
-                                      or "|cFFFFD700" .. n .. " ticket(s) loaded|r")
-        end
-        return
-    end
-
-    if msg:find("[Aa]ll tickets shown") or msg:find("[Ss]howing all")
-    or msg:find("[Ll]ist of .-tickets") or msg:find("[Tt]icket list") then
-        if _pendingEntry then FinaliseEntry(_pendingEntry, "") ; _pendingEntry = nil end
-        _listening = false
-        M:RenderList()
-        if _statusLbl then
-            local n = 0
-            for _ in pairs(_tickets) do n = n + 1 end
-            _statusLbl:SetText("|cFFFFD700" .. n .. " ticket(s) loaded|r")
         end
         return
     end
@@ -330,7 +334,8 @@ function M:Refresh()
     _pendingEntry = nil
     _listening    = true
     if _statusLbl then _statusLbl:SetText("|cFF888888Loading...|r") end
-    Utils.ExecCommand(".ticket list")
+    -- Send via GUILD (same channel GMGenie uses; server intercepts GM commands on any channel)
+    SendChatMessage(".ticket list", "GUILD")
     M:RenderList()
 end
 
