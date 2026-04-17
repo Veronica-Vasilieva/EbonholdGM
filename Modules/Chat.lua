@@ -1,9 +1,9 @@
--- EbonholdGM | Modules/Chat.lua
+-- GMPanel | Modules/Chat.lua
 -- Real-time chat monitor panel.
 -- Captures Say/Yell/Whisper/Guild/Channel messages, highlights keywords,
 -- and provides instant right-click context actions on player names.
 
-local GM    = EbonholdGM
+local GM    = GMPanel
 local UI    = GM.UI
 local T     = GM.UI.Theme
 local Utils = GM.Utils

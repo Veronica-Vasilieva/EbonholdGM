@@ -1,9 +1,9 @@
--- EbonholdGM | Modules/Teleport.lua
+-- GMPanel | Modules/Teleport.lua
 -- Teleport & world tools.
 -- Features: predefined zone list (searchable), custom locations, coord display,
 -- quick-teleport buttons, save/delete custom locations.
 
-local GM    = EbonholdGM
+local GM    = GMPanel
 local UI    = GM.UI
 local T     = GM.UI.Theme
 local Utils = GM.Utils

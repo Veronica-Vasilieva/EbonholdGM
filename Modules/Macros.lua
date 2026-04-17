@@ -1,8 +1,8 @@
--- EbonholdGM | Modules/Macros.lua
+-- GMPanel | Modules/Macros.lua
 -- GM Macro builder: create, edit, delete, and execute multi-command sequences.
 -- Macros are persisted in SavedVariables (Config.db.macros).
 
-local GM    = EbonholdGM
+local GM    = GMPanel
 local UI    = GM.UI
 local T     = GM.UI.Theme
 local Utils = GM.Utils

@@ -1,10 +1,10 @@
--- EbonholdGM | Core/Events.lua
+-- GMPanel | Core/Events.lua
 -- Lightweight pub/sub event dispatcher for internal addon communication.
 -- Usage:
 --   GM.Events:Subscribe("EGMGM_TICKET_REFRESH", myFunc)
 --   GM.Events:Dispatch("EGMGM_TICKET_REFRESH", ticketData)
 
-local GM = EbonholdGM
+local GM = GMPanel
 GM.Events = {}
 local Events = GM.Events
 
@@ -48,7 +48,7 @@ end
 
 local relay = CreateFrame("Frame")
 
--- Events that EbonholdGM modules care about
+-- Events that GMPanel modules care about
 local RELAY_EVENTS = {
     "CHAT_MSG_SAY",
     "CHAT_MSG_WHISPER",

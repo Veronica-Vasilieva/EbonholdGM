@@ -1,8 +1,8 @@
--- EbonholdGM | UI/MainFrame.lua
+-- GMPanel | UI/MainFrame.lua
 -- Builds the main window: titlebar, sidebar slot, content area, status bar.
 -- Modules plug their panels into the content area; Sidebar.lua wires the tabs.
 
-local GM    = EbonholdGM
+local GM    = GMPanel
 local UI    = GM.UI
 local T     = GM.UI.Theme
 local Utils = GM.Utils
@@ -29,7 +29,7 @@ function UI:Build()
     -- -----------------------------------------------------------------------
     -- Root frame
     -- -----------------------------------------------------------------------
-    local win = CreateFrame("Frame", "EbonholdGMFrame", UIParent)
+    local win = CreateFrame("Frame", "GMPanelFrame", UIParent)
     win:SetSize(W, H)
     win:SetFrameStrata("DIALOG")
     win:SetToplevel(true)
@@ -88,7 +88,7 @@ function UI:Build()
     local logo = titleBar:CreateFontString(nil, "OVERLAY")
     logo:SetFont(T.FONT_BOLD, 13, "OUTLINE")
     logo:SetPoint("LEFT", titleBar, "LEFT", T.SIDEBAR_W + T.PAD, 0)
-    logo:SetText("|cFF4FC3F7Ebonhold|r|cFFFFD700GM|r  |cFF666666v" .. GM.ADDON_VERSION .. "|r")
+    logo:SetText("|cFFFFD700GM Panel|r  |cFF666666v" .. GM.ADDON_VERSION .. "|r")
 
     -- Active module label (right side of logo)
     local modLabel = titleBar:CreateFontString(nil, "OVERLAY")

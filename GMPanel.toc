@@ -1,9 +1,9 @@
 ## Interface: 30300
-## Title: |cFF4FC3F7Ebonhold|r|cFFFFD700GM|r
-## Notes: Professional GM & Admin control panel for TrinityCore/AzerothCore
-## Author: Ebonhold
+## Title: |cFFFFD700GM Panel|r
+## Notes: Player-created GM & admin control panel for TrinityCore/AzerothCore (WoW 3.3.5a)
+## Author: Nu/Veronica
 ## Version: 1.1.9
-## SavedVariables: EbonholdGM_DB
+## SavedVariables: GMPanel_DB
 
 Core\Init.lua
 Core\Config.lua

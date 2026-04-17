@@ -1,9 +1,9 @@
--- EbonholdGM | Modules/Tickets.lua
+-- GMPanel | Modules/Tickets.lua
 -- GM Ticket system panel.
 -- Sends .ticket list to the server; parses CHAT_MSG_SYSTEM responses to build a ticket list.
 -- Provides: claim, close, respond, teleport to player, internal notes.
 
-local GM    = EbonholdGM
+local GM    = GMPanel
 local UI    = GM.UI
 local T     = GM.UI.Theme
 local Utils = GM.Utils

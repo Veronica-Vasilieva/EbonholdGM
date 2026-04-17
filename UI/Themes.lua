@@ -1,7 +1,7 @@
--- EbonholdGM | UI/Themes.lua
+-- GMPanel | UI/Themes.lua
 -- Color palette, font constants, and size tokens used by every UI file.
 
-local GM = EbonholdGM
+local GM = GMPanel
 GM.UI.Theme = {}
 local T = GM.UI.Theme
 

@@ -1,8 +1,8 @@
--- EbonholdGM | Modules/Commands.lua
+-- GMPanel | Modules/Commands.lua
 -- VSCode-style searchable command palette for TrinityCore/AzerothCore GM commands.
 -- Features: live filter, parameter prompts, favorites, recent commands.
 
-local GM    = EbonholdGM
+local GM    = GMPanel
 local UI    = GM.UI
 local T     = GM.UI.Theme
 local Utils = GM.Utils

@@ -1,7 +1,7 @@
--- EbonholdGM | Utils/Utils.lua
+-- GMPanel | Utils/Utils.lua
 -- General-purpose helpers shared across all modules.
 
-local GM = EbonholdGM
+local GM = GMPanel
 local Utils = GM.Utils
 
 -- ---------------------------------------------------------------------------

@@ -1,7 +1,7 @@
--- EbonholdGM | Core/Config.lua
+-- GMPanel | Core/Config.lua
 -- SavedVariables loading, defaults, and per-key accessors.
 
-local GM = EbonholdGM
+local GM = GMPanel
 GM.Config = {}
 local Config = GM.Config
 
@@ -71,11 +71,11 @@ end
 -- ---------------------------------------------------------------------------
 
 function Config:Load()
-    if type(EbonholdGM_DB) ~= "table" then
-        EbonholdGM_DB = {}
+    if type(GMPanel_DB) ~= "table" then
+        GMPanel_DB = {}
     end
-    applyDefaults(EbonholdGM_DB, DEFAULTS)
-    self.db = EbonholdGM_DB
+    applyDefaults(GMPanel_DB, DEFAULTS)
+    self.db = GMPanel_DB
 end
 
 function Config:Get(key)

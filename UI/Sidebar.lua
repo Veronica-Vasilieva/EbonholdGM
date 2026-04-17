@@ -1,7 +1,7 @@
--- EbonholdGM | UI/Sidebar.lua
+-- GMPanel | UI/Sidebar.lua
 -- Builds the left icon-tab sidebar and wires module panel switching.
 
-local GM    = EbonholdGM
+local GM    = GMPanel
 local UI    = GM.UI
 local T     = GM.UI.Theme
 local Utils = GM.Utils

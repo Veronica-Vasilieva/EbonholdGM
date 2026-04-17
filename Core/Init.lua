@@ -1,8 +1,8 @@
--- EbonholdGM | Core/Init.lua
+-- GMPanel | Core/Init.lua
 -- Main addon namespace, module registry, and bootstrap.
 
-EbonholdGM = {
-    ADDON_NAME    = "EbonholdGM",
+GMPanel = {
+    ADDON_NAME    = "GMPanel",
     ADDON_VERSION = "1.1.9",
     _modules      = {},   -- name -> module table (ordered by registration)
     _moduleOrder  = {},   -- insertion-ordered names
@@ -10,7 +10,7 @@ EbonholdGM = {
     Utils         = {},   -- Utility functions
 }
 
-local GM = EbonholdGM
+local GM = GMPanel
 
 -- ---------------------------------------------------------------------------
 -- Module registry
@@ -48,11 +48,11 @@ end
 -- ---------------------------------------------------------------------------
 
 function GM:Print(msg)
-    DEFAULT_CHAT_FRAME:AddMessage("|cFF4FC3F7[EbonholdGM]|r " .. tostring(msg))
+    DEFAULT_CHAT_FRAME:AddMessage("|cFF4FC3F7[GMPanel]|r " .. tostring(msg))
 end
 
 function GM:PrintError(msg)
-    DEFAULT_CHAT_FRAME:AddMessage("|cFFFF4444[EbonholdGM] ERROR:|r " .. tostring(msg))
+    DEFAULT_CHAT_FRAME:AddMessage("|cFFFF4444[GMPanel] ERROR:|r " .. tostring(msg))
 end
 
 --- Send a GM dot-command as a Say chat message (server intercepts it).
@@ -70,7 +70,7 @@ SLASH_EBONHOLDGM2 = "/ebonholdgm"
 SlashCmdList["EBONHOLDGM"] = function(input)
     local arg = strtrim(input or "")
     if arg == "reset" then
-        EbonholdGM_DB = nil
+        GMPanel_DB = nil
         GM:Print("Database reset. Reload UI to apply.")
     elseif arg == "version" then
         GM:Print("Version " .. GM.ADDON_VERSION)
@@ -94,7 +94,7 @@ local bootFrame = CreateFrame("Frame")
 bootFrame:RegisterEvent("ADDON_LOADED")
 bootFrame:RegisterEvent("PLAYER_LOGIN")
 bootFrame:SetScript("OnEvent", function(self, event, arg1)
-    if event == "ADDON_LOADED" and arg1 == "EbonholdGM" then
+    if event == "ADDON_LOADED" and arg1 == "GMPanel" then
         GM.Config:Load()
     elseif event == "PLAYER_LOGIN" then
         -- All files are loaded by now; build UI then init modules.

@@ -1,8 +1,8 @@
--- EbonholdGM | Modules/Players.lua
+-- GMPanel | Modules/Players.lua
 -- Player management panel: search, inspect, and act on players.
 -- Actions: teleport to/from, summon, kick, ban, mute, modify.
 
-local GM    = EbonholdGM
+local GM    = GMPanel
 local UI    = GM.UI
 local T     = GM.UI.Theme
 local Utils = GM.Utils

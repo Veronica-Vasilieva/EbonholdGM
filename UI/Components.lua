@@ -1,8 +1,8 @@
--- EbonholdGM | UI/Components.lua
+-- GMPanel | UI/Components.lua
 -- Reusable UI widget factory. Every visual element is built from here so
 -- theming is centralized and consistent.
 
-local GM   = EbonholdGM
+local GM   = GMPanel
 local UI   = GM.UI
 local T    = GM.UI.Theme
 local Utils = GM.Utils

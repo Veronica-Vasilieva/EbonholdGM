@@ -1,6 +1,6 @@
-# EbonholdGM
+# GMPanel
 
-Professional GM & Admin control panel for WoW 3.3.5a (TrinityCore / AzerothCore).
+Player-created GM & admin control panel for WoW 3.3.5a (TrinityCore / AzerothCore).
 
 ![Version](https://img.shields.io/badge/version-1.0.7-gold)
 ![Interface](https://img.shields.io/badge/interface-30300-blue)
@@ -56,7 +56,7 @@ Create, edit, and delete multi-command GM macro sequences, persisted in SavedVar
 
 1. Download the latest zip from the [Releases](../../releases) page
 2. Extract into your `Interface/AddOns/` folder
-3. **The folder must be named `EbonholdGM` exactly** — rename if your zip tool used a different name
+3. **The folder must be named `GMPanel` exactly** — rename if your zip tool used a different name
 4. `/reload` in-game
 
 > Tested on Project Ebonhold (Valanior) — TrinityCore 3.3.5a
@@ -76,7 +76,7 @@ Create, edit, and delete multi-command GM macro sequences, persisted in SavedVar
 ## Architecture
 
 ```
-EbonholdGM/
+GMPanel/
   Core/
     Init.lua        -- Namespace, module registry, slash commands, bootstrap
     Config.lua      -- SavedVariables loading, defaults, nested accessors
@@ -97,7 +97,7 @@ EbonholdGM/
     Macros.lua      -- Macro builder
 ```
 
-Modules self-register via `EbonholdGM:RegisterModule(name, module)`. Each module provides:
+Modules self-register via `GMPanel:RegisterModule(name, module)`. Each module provides:
 - `title` — display name
 - `OnLoad()` — called once after PLAYER_LOGIN
 - `CreatePanel(parent)` — returns a Frame filling the content area
@@ -120,7 +120,7 @@ This addon is written strictly for the 3.3.5a API. Notable compatibility decisio
 
 ## SavedVariables
 
-`EbonholdGM_DB` stores:
+`GMPanel_DB` stores:
 
 | Key | Contents |
 |---|---|
